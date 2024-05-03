@@ -220,7 +220,6 @@ if (isFALSE(length(clonenum2)>0)){
 
 #### Distance from PCA centroid ####
 
-
 #run your standard scripts to filter and generate a dms prior to running below:
 
 ##### Run PCA #####
@@ -231,8 +230,10 @@ library(RRtools); library(adegenet); library(plyr); library(spatstat)
 
 
 nd_gl <- dart2gl(dms, RandRbase, species, dataset) # converts the cleaned data to genlight format
-nd_pca <- glPca(nd_gl, nf = 5, parallel = FALSE) # nf indicates the number of principal components to be retained
+nd_pca <- glPca(nd_gl, nf = 5, parallel = FALSE) #this might take a while!! # nf = number of principal components to be retained 
+
 scatter(nd_pca) # a quick check of PCA
+
 
 sample_PC1_PC2 <- cbind(dms$meta$sample_names,
                         dms$meta$analyses[, analysis],
@@ -281,7 +282,19 @@ df3 <- merge(df, rep222[, c(1, 7, 8)], by = "site")
 #colnames(percvar) <- c("PC1", "PC2", "PC3")
 
 
+#Quick plot to see
+library(rgl)
+plot3d(df3$PC1,df3$PC2, df3$PC3, centroidCoords,col=rainbow(length(unique(df3$site))))
 
+
+#devtools::install_github("AckerDWM/gg3D")
+library("gg3D")
+ggplot(df3, aes(x=PC1,y=PC2, z=PC3))+
+  geom_point(aes(x=centroidCoords[1],y=centroidCoords[2], z=centroidCoords[3]), color="red", size=5)+
+  theme_void() +
+  axes_3D() +
+  stat_3D()
+  
 
 
 
@@ -306,13 +319,16 @@ df3$DistPointPCA_1_2_3 <- crossdist.pp3(X, threeDmedian)
 
 
 
-##### Now average the dist from PCA centroid for each region/site ####
+##### Now average the dist from PCA centroid for each site (can be changed to average per sp, region etc...)####
+
+uqsites <- unique(dms$meta$analyses[, analysis])
+
 
 avgdf3 <- c()
-for (r in 1:length(region)){
-  nums <- which(df3$region==region[r])
+for (r in 1:length(uqsites)){
+  nums <- which(df3$site==uqsites[r])
   fs <- nums[1]
-  avgdf3$region[r] <- df3$region[fs]
+  avgdf3$site[r] <- df3$site[fs]
   avgdf3$DistPointPC1_2_3[r] <- mean(df3$DistPointPCA_1_2_3[nums])
   
 }
